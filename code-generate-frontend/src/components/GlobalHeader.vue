@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import logo from '@/assets/logo.svg'
+import { useLoginUserStore } from '@/stores/loginUser.ts'
 
 interface MenuItemConfig {
   key: string
@@ -25,11 +26,13 @@ const props = withDefaults(
 
 const route = useRoute()
 const router = useRouter()
+const loginUserStore = useLoginUserStore()
 
 const selectedKeys = computed(() => {
   const activeItem =
-    props.menuItems.find((item) => route.path === item.path || route.path.startsWith(`${item.path}/`)) ??
-    props.menuItems[0]
+    props.menuItems.find(
+      (item) => route.path === item.path || route.path.startsWith(`${item.path}/`),
+    ) ?? props.menuItems[0]
 
   return activeItem ? [activeItem.key] : []
 })
@@ -47,6 +50,21 @@ const handleMenuClick = ({ key }: { key: string }) => {
     router.push(target.path)
   }
 }
+
+const isLoggedIn = computed(() => {
+  return !!loginUserStore.loginUser?.id
+})
+
+const displayUsername = computed(() => {
+  return (
+    loginUserStore.loginUser?.userName ||
+    (loginUserStore.loginUser as API.LoginUserVO & { username?: string })?.username ||
+    '用户'
+  )
+})
+
+const displayUserAvatar = computed(() => loginUserStore.loginUser?.userAvatar || '')
+
 </script>
 
 <template>
@@ -65,7 +83,13 @@ const handleMenuClick = ({ key }: { key: string }) => {
     />
 
     <div class="user-area">
-      <a-button type="primary">登录</a-button>
+      <RouterLink v-if="!isLoggedIn" to="/user/login">
+        <a-button type="primary">登录</a-button>
+      </RouterLink>
+      <div v-else class="user-info">
+        <a-avatar :src="displayUserAvatar">{{ displayUsername.charAt(0) }}</a-avatar>
+        <span class="username">{{ displayUsername }}</span>
+      </div>
     </div>
   </a-layout-header>
 </template>
@@ -112,9 +136,26 @@ const handleMenuClick = ({ key }: { key: string }) => {
 }
 
 .user-area {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.username {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #1f1f1f;
+  font-size: 14px;
 }
 
 @media (max-width: 768px) {
