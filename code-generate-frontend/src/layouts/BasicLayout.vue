@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import ACCESS_ENUM from '@/access/accessEnum'
 import GlobalFooter from '@/components/GlobalFooter.vue'
 import GlobalHeader from '@/components/GlobalHeader.vue'
 
 const menuItems = [
   { key: 'home', label: '首页', path: '/' },
-  { key: 'about', label: '关于', path: '/about' },
+  { key: 'userManage', label: '用户管理', path: '/admin/userManage', access: ACCESS_ENUM.ADMIN },
 ]
 </script>
 
@@ -33,7 +34,8 @@ const menuItems = [
 }
 
 .content-wrapper {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1600px;
   margin: 0 auto;
 }
 

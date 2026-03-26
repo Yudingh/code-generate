@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import ACCESS_ENUM from '@/access/accessEnum'
+import checkAccess from '@/access/checkAccess'
+import { getCurrentAccess } from '@/access'
 import logo from '@/assets/logo.svg'
+import { logout } from '@/api/userController.ts'
 import { useLoginUserStore } from '@/stores/loginUser.ts'
 
 interface MenuItemConfig {
   key: string
   label: string
   path: string
+  access?: string
 }
 
 const props = withDefaults(
@@ -18,8 +24,7 @@ const props = withDefaults(
   {
     title: '代码生成平台',
     menuItems: () => [
-      { key: 'home', label: '首页', path: '/' },
-      { key: 'about', label: '关于', path: '/about' },
+      { key: 'home', label: '首页', path: '/', access: ACCESS_ENUM.NOT_LOGIN },
     ],
   },
 )
@@ -28,24 +33,30 @@ const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
+const currentAccess = computed(() => getCurrentAccess(loginUserStore.loginUser))
+
+const visibleMenuItems = computed(() =>
+  props.menuItems.filter((item) => checkAccess(currentAccess.value, item.access || ACCESS_ENUM.NOT_LOGIN)),
+)
+
 const selectedKeys = computed(() => {
   const activeItem =
-    props.menuItems.find(
+    visibleMenuItems.value.find(
       (item) => route.path === item.path || route.path.startsWith(`${item.path}/`),
-    ) ?? props.menuItems[0]
+    ) ?? visibleMenuItems.value[0]
 
   return activeItem ? [activeItem.key] : []
 })
 
 const menuOptions = computed(() =>
-  props.menuItems.map((item) => ({
+  visibleMenuItems.value.map((item) => ({
     key: item.key,
     label: item.label,
   })),
 )
 
 const handleMenuClick = ({ key }: { key: string }) => {
-  const target = props.menuItems.find((item) => item.key === key)
+  const target = visibleMenuItems.value.find((item) => item.key === key)
   if (target && target.path !== route.path) {
     router.push(target.path)
   }
@@ -64,6 +75,29 @@ const displayUsername = computed(() => {
 })
 
 const displayUserAvatar = computed(() => loginUserStore.loginUser?.userAvatar || '')
+
+const userMenuItems = [{ key: 'logout', label: '退出登录' }]
+
+const handleUserMenuClick = async ({ key }: { key: string }) => {
+  if (key !== 'logout') {
+    return
+  }
+
+  try {
+    const res = await logout()
+    if (res.data.code !== 0) {
+      message.error(res.data.message || '退出登录失败')
+      return
+    }
+    message.success('已退出登录')
+  } catch (error: any) {
+    message.error(error?.message || '退出登录失败')
+    return
+  }
+
+  loginUserStore.setLoginUser({ userName: '未登录' })
+  await router.push('/user/login')
+}
 
 </script>
 
@@ -86,10 +120,15 @@ const displayUserAvatar = computed(() => loginUserStore.loginUser?.userAvatar ||
       <RouterLink v-if="!isLoggedIn" to="/user/login">
         <a-button type="primary">登录</a-button>
       </RouterLink>
-      <div v-else class="user-info">
-        <a-avatar :src="displayUserAvatar">{{ displayUsername.charAt(0) }}</a-avatar>
-        <span class="username">{{ displayUsername }}</span>
-      </div>
+      <a-dropdown v-else :trigger="['hover']">
+        <div class="user-info">
+          <a-avatar :src="displayUserAvatar">{{ displayUsername.charAt(0) }}</a-avatar>
+          <span class="username">{{ displayUsername }}</span>
+        </div>
+        <template #overlay>
+          <a-menu :items="userMenuItems" @click="handleUserMenuClick" />
+        </template>
+      </a-dropdown>
     </div>
   </a-layout-header>
 </template>
@@ -147,6 +186,7 @@ const displayUserAvatar = computed(() => loginUserStore.loginUser?.userAvatar ||
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
 }
 
 .username {
