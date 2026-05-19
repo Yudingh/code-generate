@@ -18,7 +18,7 @@ public class HtmlCodeFileSaverTemplate extends CodeFileSaverTemplate<HtmlCodeRes
 
     @Override
     protected void saveFiles(HtmlCodeResult result, String baseDirPath) {
-        WriteToFile(this.buildUniqueDir(),"index.html",result.getHtmlCode());
+        WriteToFile(baseDirPath,"index.html",result.getHtmlCode());
     }
 
     @Override

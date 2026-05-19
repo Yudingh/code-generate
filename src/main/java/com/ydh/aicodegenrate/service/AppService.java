@@ -10,6 +10,7 @@ import com.ydh.aicodegenrate.model.entity.App;
 import com.ydh.aicodegenrate.model.entity.User;
 import com.ydh.aicodegenrate.model.vo.AppVO;
 import com.ydh.aicodegenrate.model.vo.UserVO;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -57,5 +58,19 @@ public interface AppService extends IService<App> {
      */
     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
 
+    /**
+     * 批量获得AppVo列表
+     * @param appList app列表
+     * @return appVo列表
+     */
     List<AppVO> getAppVOList(List<App> appList);
+
+    /**
+     * 调用门面类生成代码
+     * @param appId 应用id
+     * @param message 用户信息
+     * @param user 登录用户
+     * @return 响应结果
+     */
+    Flux<String> chatToGenCode(Long appId, String message, User user);
 }

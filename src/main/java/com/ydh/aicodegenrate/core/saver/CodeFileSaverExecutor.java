@@ -16,10 +16,10 @@ public class CodeFileSaverExecutor {
     private static final HtmlCodeFileSaverTemplate htmlCodeFileSaverTemplate = new HtmlCodeFileSaverTemplate();
     private static final MutiFileCodeFileSaverTemplate mutiFileCodeFileSaverTemplate = new MutiFileCodeFileSaverTemplate();
 
-    public static File executeCodeSave(Object result ,CodeGenTypeEnum codeGenTypeEnum){
+    public static File executeCodeSave(Object result ,CodeGenTypeEnum codeGenTypeEnum, Long appId){
         return switch (codeGenTypeEnum){
-            case HTML -> htmlCodeFileSaverTemplate.saveCode((HtmlCodeResult) result);
-            case MULTI_FILE -> mutiFileCodeFileSaverTemplate.saveCode((MultiFileCodeResult) result);
+            case HTML -> htmlCodeFileSaverTemplate.saveCode((HtmlCodeResult) result, appId);
+            case MULTI_FILE -> mutiFileCodeFileSaverTemplate.saveCode((MultiFileCodeResult) result,appId);
             default -> throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成类型错误"+codeGenTypeEnum);
         };
     }
