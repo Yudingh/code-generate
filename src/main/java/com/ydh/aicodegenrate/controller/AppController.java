@@ -22,6 +22,7 @@ import com.ydh.aicodegenrate.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.ydh.aicodegenrate.model.entity.App;
@@ -29,7 +30,9 @@ import com.ydh.aicodegenrate.service.AppService;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 应用 控制层。
@@ -225,11 +228,25 @@ public class AppController {
         return ResultUtils.success(appService.getAppVO(app));
     }
 
+    /**
+     * 流式返回生成结果
+     * @param appId 应用id
+     * @param message 用户消息
+     * @param request http请求
+     * @return 生成结果
+     */
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> chatToGenCode(@RequestParam Long appId,@RequestParam String message,HttpServletRequest request){
+    public Flux<ServerSentEvent<Map<String, String>>> chatToGenCode(@RequestParam Long appId,@RequestParam String message,HttpServletRequest request){
         ThrowUtils.throwIf(appId == null || appId < 0,ErrorCode.PARAMS_ERROR,"应用ID错误");
         ThrowUtils.throwIf(StrUtil.isBlank(message),ErrorCode.PARAMS_ERROR,"用户输入为空");
         User loginUser = userService.getLoginUser(request);
-        return appService.chatToGenCode(appId,message,loginUser);
+        Flux<ServerSentEvent<Map<String, String>>> dataStream = appService.chatToGenCode(appId, message, loginUser)
+                .map(chunk -> ServerSentEvent.<Map<String, String>>builder()
+                        .data(Collections.singletonMap("d", chunk))
+                        .build());
+        ServerSentEvent<Map<String, String>> doneEvent = ServerSentEvent.<Map<String, String>>builder()
+                .event("done")
+                .build();
+        return dataStream.concatWith(Flux.just(doneEvent));
     }
 }
