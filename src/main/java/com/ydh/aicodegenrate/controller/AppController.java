@@ -249,4 +249,14 @@ public class AppController {
                 .build();
         return dataStream.concatWith(Flux.just(doneEvent));
     }
+
+    @PostMapping("/deploy")
+    public BaseResponse<String> deploy(@RequestBody AppDeployRequest appDeployRequest, HttpServletRequest request){
+        ThrowUtils.throwIf(appDeployRequest == null,ErrorCode.PARAMS_ERROR);
+        Long appId = appDeployRequest.getAppId();
+        ThrowUtils.throwIf(appId == null || appId < 0,ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        String deployUrl = appService.deployApp(appId, loginUser);
+        return ResultUtils.success(deployUrl);
+    }
 }

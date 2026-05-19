@@ -3,6 +3,7 @@ package com.ydh.aicodegenrate.core.saver;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import com.ydh.aicodegenrate.constant.AppConstant;
 import com.ydh.aicodegenrate.exception.BusinessException;
 import com.ydh.aicodegenrate.exception.ErrorCode;
 import com.ydh.aicodegenrate.model.enums.CodeGenTypeEnum;
@@ -16,7 +17,7 @@ import java.nio.charset.StandardCharsets;
  */
 public abstract class CodeFileSaverTemplate<T> {
     // 定义文件保存根目录
-    protected final static String FILE_SAVE_ROOT_DIR = System.getProperty("user.dir") + "/tmp/code_output";
+    protected final static String FILE_SAVE_ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
 
     /**
      * 模板方法：定义文件保存的流程
