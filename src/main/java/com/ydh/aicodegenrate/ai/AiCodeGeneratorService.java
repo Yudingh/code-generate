@@ -1,6 +1,9 @@
 package com.ydh.aicodegenrate.ai;
 
+import com.ydh.aicodegenrate.ai.model.HtmlCodeResult;
+import com.ydh.aicodegenrate.ai.model.MultiFileCodeResult;
 import dev.langchain4j.service.SystemMessage;
+import reactor.core.publisher.Flux;
 
 public interface AiCodeGeneratorService {
     /**
@@ -9,7 +12,7 @@ public interface AiCodeGeneratorService {
      * @return 生成结果
      */
     @SystemMessage(fromResource = "prompt/code-generate-prompt-single-html.txt")
-    String generateHTMLCode(String userMessage);
+    HtmlCodeResult generateHTMLCode(String userMessage);
 
     /**
      * 生成多文件的代码
@@ -17,5 +20,21 @@ public interface AiCodeGeneratorService {
      * @return 生成结果
      */
     @SystemMessage(fromResource = "prompt/code-generate-prompt-multi-file.txt")
-    String generateMultiFileCode(String userMessage);
+    MultiFileCodeResult generateMultiFileCode(String userMessage);
+
+    /**
+     * 生成单HTML文件的代码(流式输出)
+     * @param userMessage 用户提示词
+     * @return 生成结果
+     */
+    @SystemMessage(fromResource = "prompt/code-generate-prompt-single-html.txt")
+    Flux<String> generateHTMLCodeStream(String userMessage);
+
+    /**
+     * 生成多文件的代码(流式输出)
+     * @param userMessage 用户提示词
+     * @return 生成结果
+     */
+    @SystemMessage(fromResource = "prompt/code-generate-prompt-multi-file.txt")
+    Flux<String> generateMultiFileCodeStream(String userMessage);
 }

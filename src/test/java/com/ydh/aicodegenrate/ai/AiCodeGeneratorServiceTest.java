@@ -1,5 +1,7 @@
 package com.ydh.aicodegenrate.ai;
 
+import com.ydh.aicodegenrate.ai.model.HtmlCodeResult;
+import com.ydh.aicodegenrate.ai.model.MultiFileCodeResult;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -15,13 +17,13 @@ class AiCodeGeneratorServiceTest {
 
     @Test
     void generateHTMLCode() {
-        String htmlCode = aiCodeGeneratorService.generateHTMLCode("帮我生成个人博客界面，博客名为：nithti,不超过20行");
+        HtmlCodeResult htmlCode = aiCodeGeneratorService.generateHTMLCode("帮我生成一个简单的个人博客界面，代码不超过20行");
         Assertions.assertNotNull(htmlCode);
     }
 
     @Test
     void generateMultiFileCode() {
-        String multiFileCode = aiCodeGeneratorService.generateMultiFileCode("帮我生成个人博客界面，博客名为：nithti，不超过20行");
+        MultiFileCodeResult multiFileCode = aiCodeGeneratorService.generateMultiFileCode("帮我生成一个简单的个人博客界面，代码不超过20行");
         Assertions.assertNotNull(multiFileCode);
     }
 }
