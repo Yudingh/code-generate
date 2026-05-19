@@ -1,22 +1,37 @@
 <template>
-  <a-layout-footer class="global-footer">
-    代码生成平台
-    <a href="https://github.com/Yudingh/code-generate" target="_blank" rel="noopener noreferrer">
-      https://github.com/Yudingh/code-generate
-    </a>
+  <a-layout-footer class="footer">
+    <div class="footer-content">
+      <p class="copyright">
+        <a
+          href="https://github.com/Yudingh/code-generate"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="author-link"
+        >
+          零代码网页生成平台 by Yudh
+        </a>
+      </p>
+    </div>
   </a-layout-footer>
 </template>
 
+<script setup lang="ts">
+// 无需额外的响应式数据
+</script>
+
 <style scoped>
-.global-footer {
-  padding: 16px 20px;
+.footer {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   text-align: center;
-  color: rgba(0, 0, 0, 0.65);
-  background: #fff;
-  border-top: 1px solid #f0f0f0;
+  padding: 20px;
+  margin-top: 40px;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
 }
 
-.global-footer a {
-  margin-left: 8px;
+.copyright {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
 }
 </style>

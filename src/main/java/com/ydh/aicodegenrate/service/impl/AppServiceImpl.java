@@ -152,7 +152,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
             return new ArrayList<>();
         }
         // 批量获取用户ID
-        Set<Long> userIds = appList.stream().map(App::getId).collect(Collectors.toSet());
+        Set<Long> userIds = appList.stream().map(App::getUserId).collect(Collectors.toSet());
         // 构建Map映射关系 userId->userVo
         Map<Long, UserVO> userVOMap = userService.listByIds(userIds).stream()
                 .collect(Collectors.toMap(User::getId, userService::getUserVO));

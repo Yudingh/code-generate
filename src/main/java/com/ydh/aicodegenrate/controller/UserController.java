@@ -79,7 +79,7 @@ public class UserController {
      * @param httpServletRequest 请求
      * @return 脱敏后用户信息
      */
-    @PostMapping("/get/login")
+    @GetMapping("/get/login")
     public BaseResponse<LoginUserVO> getLogin(HttpServletRequest httpServletRequest) {
         ThrowUtils.throwIf(httpServletRequest == null,ErrorCode.PARAMS_ERROR,"参数为空");
         User loginUser = userService.getLoginUser(httpServletRequest);
