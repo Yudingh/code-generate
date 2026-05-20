@@ -20,15 +20,18 @@ import com.ydh.aicodegenrate.model.dto.app.AppUpdateRequest;
 import com.ydh.aicodegenrate.model.entity.App;
 import com.ydh.aicodegenrate.mapper.AppMapper;
 import com.ydh.aicodegenrate.model.entity.User;
+import com.ydh.aicodegenrate.model.enums.ChatHistoryMessageTypeEnum;
 import com.ydh.aicodegenrate.model.enums.CodeGenTypeEnum;
 import com.ydh.aicodegenrate.model.vo.AppVO;
 import com.ydh.aicodegenrate.model.vo.UserVO;
 import com.ydh.aicodegenrate.service.AppService;
+import com.ydh.aicodegenrate.service.ChatHistoryService;
 import com.ydh.aicodegenrate.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -51,6 +54,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     private UserService userService;
     @Resource
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
+    @Resource
+    private ChatHistoryService chatHistoryService;
 
     @Override
     public Long createApp(AppAddRequest appAddRequest, User user) {
@@ -90,6 +95,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteApp(AppDeleteRequest appDeleteRequest, User user) {
         Long id = appDeleteRequest.getId();
         App oldApp = this.getById(id);
@@ -97,7 +103,14 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         if (!oldApp.getUserId().equals(user.getId()) && !UserConstant.ADMIN_ROLE.equals(user.getUserRole())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        return this.removeById(id);
+        // 先清理应用下历史对话，再删除应用本身
+        boolean deleteChatHistory = chatHistoryService.deleteByAppId(id);
+
+        boolean isRemove = this.removeById(id);
+        if (!isRemove) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,"删除应用失败");
+        }
+        return true;
     }
 
     @Override
@@ -183,7 +196,34 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         if (enumByValue == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"不支持当前生成类型");
         }
-        return aiCodeGeneratorFacade.generateAndSaveCodeStream(message,enumByValue,appId);
+        // 5. 落库用户消息
+        boolean saveUserMsg = chatHistoryService.addChatMessage(
+                appId, message, ChatHistoryMessageTypeEnum.USER.getValue(), user.getId()
+        );
+        ThrowUtils.throwIf(!saveUserMsg, ErrorCode.OPERATION_ERROR, "保存用户历史消息失败");
+
+        // 6. 流式生成并在结束后落库完整 AI 回复
+        StringBuilder aiMessageBuilder = new StringBuilder();
+        return aiCodeGeneratorFacade.generateAndSaveCodeStream(message,enumByValue,appId)
+                .doOnNext(aiMessageBuilder::append)
+                .doOnComplete(() -> {
+                    String aiMessage = aiMessageBuilder.toString();
+                    if (StrUtil.isNotBlank(aiMessage)) {
+                        boolean saveAiMsg = chatHistoryService.addChatMessage(
+                                appId, aiMessage, ChatHistoryMessageTypeEnum.AI.getValue(), user.getId()
+                        );
+                        ThrowUtils.throwIf(!saveAiMsg, ErrorCode.OPERATION_ERROR, "保存AI历史消息失败");
+                    }
+                })
+                .doOnError(error -> {
+                    String errorMessage = StrUtil.blankToDefault(error.getMessage(), error.toString());
+                    chatHistoryService.addChatMessage(
+                            appId,
+                            "AI回复失败：" + errorMessage,
+                            ChatHistoryMessageTypeEnum.AI.getValue(),
+                            user.getId()
+                    );
+                });
     }
 
     @Override
