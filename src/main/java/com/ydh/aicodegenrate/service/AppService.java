@@ -44,6 +44,7 @@ public interface AppService extends IService<App> {
      */
     Boolean deleteApp(AppDeleteRequest appDeleteRequest, User user);
 
+    Boolean deleteAppByAdmin(AppDeleteRequest appDeleteRequest, User user);
     /**
      * 获取封装App信息
      * @param app  app信息

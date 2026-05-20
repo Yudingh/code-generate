@@ -10,6 +10,10 @@ declare namespace API {
     priority?: number
   }
 
+  type AppDeleteRequest = {
+    id?: number
+  }
+
   type AppDeployRequest = {
     appId?: number
   }
@@ -79,6 +83,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponsePageChatHistory = {
+    code?: number
+    data?: PageChatHistory
+    message?: string
+  }
+
   type BaseResponsePageUserVO = {
     code?: number
     data?: PageUserVO
@@ -103,6 +113,31 @@ declare namespace API {
     message?: string
   }
 
+  type ChatHistory = {
+    id?: number
+    message?: string
+    messageType?: string
+    appId?: number
+    userId?: number
+    createTime?: string
+    updateTime?: string
+    isDelete?: number
+  }
+
+  type ChatHistoryQueryRequest = {
+    pageNum?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    id?: number
+    message?: string
+    messageType?: string
+    appId?: number
+    userId?: number
+    lastCreateTime?: string
+    lastId?: number
+  }
+
   type chatToGenCodeParams = {
     appId: number
     message: string
@@ -112,20 +147,24 @@ declare namespace API {
     id?: number
   }
 
-  type getAppVOByIdByAdminParams = {
+  type deleteUsingPOSTParams = {
+    userId: number
+  }
+
+  type getAppVoByIdByAdminParams = {
     id: number
   }
 
-  type getAppVOByIdParams = {
+  type getAppVoByIdParams = {
     id: number
   }
 
   type getUserByIdParams = {
-    id: number
+    userId: number
   }
 
   type getUserVOByIdParams = {
-    id: number
+    userId: number
   }
 
   type LoginUserVO = {
@@ -148,6 +187,15 @@ declare namespace API {
     optimizeCountQuery?: boolean
   }
 
+  type PageChatHistory = {
+    records?: ChatHistory[]
+    pageNumber?: number
+    pageSize?: number
+    totalPage?: number
+    totalRow?: number
+    optimizeCountQuery?: boolean
+  }
+
   type PageUserVO = {
     records?: UserVO[]
     pageNumber?: number
@@ -157,7 +205,7 @@ declare namespace API {
     optimizeCountQuery?: boolean
   }
 
-  type ServerSentEventString = true
+  type ServerSentEventMapStringString = true
 
   type serveStaticResourceParams = {
     deployKey: string

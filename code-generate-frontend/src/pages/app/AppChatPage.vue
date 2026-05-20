@@ -27,6 +27,11 @@
       <div class="chat-section">
         <!-- 消息区域 -->
         <div class="messages-container" ref="messagesContainer">
+          <div v-if="hasMoreHistory" class="load-more-wrapper">
+            <a-button type="link" :loading="isLoadingHistory" @click="loadMoreHistory">
+              加载更多
+            </a-button>
+          </div>
           <div v-for="(message, index) in messages" :key="index" class="message-item">
             <div v-if="message.type === 'user'" class="user-message">
               <div class="message-content">{{ message.content }}</div>
@@ -145,9 +150,10 @@ import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser'
 import {
   getAppVoById,
-  deployApp as deployAppApi,
+  deploy as deployAppApi,
   deleteApp as deleteAppApi,
 } from '@/api/appController'
+import { listAppChatHistoryByPage } from '@/api/chatHistoryController'
 import { CodeGenTypeEnum } from '@/utils/codeGenTypes'
 import request from '@/request'
 
@@ -174,6 +180,8 @@ const appId = ref<string>()
 
 // 对话相关
 interface Message {
+  id?: string
+  createTime?: string
   type: 'user' | 'ai'
   content: string
   loading?: boolean
@@ -183,7 +191,11 @@ const messages = ref<Message[]>([])
 const userInput = ref('')
 const isGenerating = ref(false)
 const messagesContainer = ref<HTMLElement>()
-const hasInitialConversation = ref(false) // 标记是否已经进行过初始对话
+const isLoadingHistory = ref(false)
+const hasMoreHistory = ref(false)
+const oldestCursorId = ref<string>()
+const oldestCursorCreateTime = ref<string>()
+const HISTORY_PAGE_SIZE = 10
 
 // 预览相关
 const previewUrl = ref('')
@@ -196,7 +208,10 @@ const deployUrl = ref('')
 
 // 权限相关
 const isOwner = computed(() => {
-  return appInfo.value?.userId === loginUserStore.loginUser.id
+  if (!appInfo.value?.userId || !loginUserStore.loginUser.id) {
+    return false
+  }
+  return String(appInfo.value.userId) === String(loginUserStore.loginUser.id)
 })
 
 const isAdmin = computed(() => {
@@ -223,18 +238,10 @@ const fetchAppInfo = async () => {
   appId.value = id
 
   try {
-    const res = await getAppVoById({ id: id as unknown as number })
+    const res = await getAppVoById({ id: id as any })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
-
-      // 检查是否有view=1参数，如果有则不自动发送初始提示词
-      const isViewMode = route.query.view === '1'
-
-      // 自动发送初始提示词（除非是查看模式或已经进行过初始对话）
-      if (appInfo.value.initPrompt && !isViewMode && !hasInitialConversation.value) {
-        hasInitialConversation.value = true
-        await sendInitialMessage(appInfo.value.initPrompt)
-      }
+      updatePreview()
     } else {
       message.error('获取应用信息失败')
       router.push('/')
@@ -243,6 +250,85 @@ const fetchAppInfo = async () => {
     console.error('获取应用信息失败：', error)
     message.error('获取应用信息失败')
     router.push('/')
+  }
+}
+
+const convertHistoryToMessages = (records: API.ChatHistory[] = []): Message[] => {
+  // 保持后端顺序；仅当明显是“倒序”时做一次反转，确保较新的消息更靠下
+  const normalizedRecords = records.slice()
+  if (normalizedRecords.length > 1) {
+    const first = normalizedRecords[0]
+    const last = normalizedRecords[normalizedRecords.length - 1]
+    const firstTime = first.createTime ? new Date(first.createTime).getTime() : 0
+    const lastTime = last.createTime ? new Date(last.createTime).getTime() : 0
+    if (firstTime > lastTime) {
+      normalizedRecords.reverse()
+    }
+  }
+  return normalizedRecords.map((record) => ({
+      id: record.id ? String(record.id) : undefined,
+      createTime: record.createTime,
+      type: record.messageType === 'user' ? 'user' : 'ai',
+      content: record.message ?? '',
+    }))
+}
+
+const updateOldestCursor = () => {
+  const oldestMessage = messages.value.find((item) => item.id && item.createTime)
+  oldestCursorId.value = oldestMessage?.id
+  oldestCursorCreateTime.value = oldestMessage?.createTime
+}
+
+const loadHistoryMessages = async (loadMore = false) => {
+  if (!appId.value || isLoadingHistory.value) {
+    return
+  }
+  isLoadingHistory.value = true
+  try {
+    const requestBody: API.ChatHistoryQueryRequest = {
+      appId: appId.value as any,
+      pageSize: HISTORY_PAGE_SIZE,
+      pageNum: 1,
+    }
+    if (loadMore && oldestCursorId.value && oldestCursorCreateTime.value) {
+      requestBody.lastId = oldestCursorId.value
+      requestBody.lastCreateTime = oldestCursorCreateTime.value
+    }
+    const res = await listAppChatHistoryByPage(requestBody)
+    if (res.data.code !== 0) {
+      message.error('加载历史对话失败：' + res.data.message)
+      return
+    }
+    const records = res.data.data?.records ?? []
+    const historyMessages = convertHistoryToMessages(records)
+    if (loadMore) {
+      messages.value = [...historyMessages, ...messages.value]
+    } else {
+      messages.value = historyMessages
+      await nextTick()
+      scrollToBottom()
+    }
+    updateOldestCursor()
+    hasMoreHistory.value = records.length === HISTORY_PAGE_SIZE
+  } catch (error) {
+    console.error('加载历史对话失败：', error)
+    message.error('加载历史对话失败')
+  } finally {
+    isLoadingHistory.value = false
+  }
+}
+
+const loadMoreHistory = async () => {
+  await loadHistoryMessages(true)
+}
+
+const initChatPage = async () => {
+  await fetchAppInfo()
+  updatePreview()
+  await loadHistoryMessages(false)
+  // 仅在应用创建者且没有历史对话时，自动发送 initPrompt
+  if (isOwner.value && messages.value.length === 0 && appInfo.value?.initPrompt) {
+    await sendInitialMessage(appInfo.value.initPrompt)
   }
 }
 
@@ -421,7 +507,7 @@ const deployApp = async () => {
   deploying.value = true
   try {
     const res = await deployAppApi({
-      appId: appId.value as unknown as number,
+      appId: appId.value as any,
     })
 
     if (res.data.code === 0 && res.data.data) {
@@ -486,7 +572,7 @@ const deleteApp = async () => {
 
 // 页面加载时获取应用信息
 onMounted(() => {
-  fetchAppInfo()
+  initChatPage()
 })
 
 // 清理资源
@@ -559,6 +645,11 @@ onUnmounted(() => {
 
 .message-item {
   margin-bottom: 12px;
+}
+
+.load-more-wrapper {
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .user-message {

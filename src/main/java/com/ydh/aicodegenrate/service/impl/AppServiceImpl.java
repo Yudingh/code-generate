@@ -114,6 +114,23 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteAppByAdmin(AppDeleteRequest appDeleteRequest, User user) {
+        Long id = appDeleteRequest.getId();
+        App app = this.getById(id);
+        ThrowUtils.throwIf(app==null,ErrorCode.NOT_FOUND_ERROR,"应用不存在");
+        if (!UserConstant.ADMIN_ROLE.equals(user.getUserRole())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"无管理员权限");
+        }
+        boolean deleteChatHistory = chatHistoryService.deleteByAppId(id);
+        boolean isRemove = this.removeById(id);
+        if (!isRemove) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,"删除应用失败");
+        }
+        return true;
+    }
+
+    @Override
     public AppVO getAppVO(App app) {
         if (app == null) {
             return null;

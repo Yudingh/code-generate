@@ -154,21 +154,18 @@ public class AppController {
 
     /**
      * 管理员删除应用
-     * @param deleteRequest 删除请求
+     * @param appDeleteRequest 删除请求
      * @return 是否成功
      */
      @PostMapping("/admin/delete")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> deleteByAdmin(@RequestBody DeleteRequest deleteRequest){
-         if (deleteRequest == null || deleteRequest.getId() < 0){
+    public BaseResponse<Boolean> deleteByAdmin(@RequestBody AppDeleteRequest appDeleteRequest,HttpServletRequest request){
+         if (appDeleteRequest == null || appDeleteRequest.getId() < 0){
              throw new BusinessException(ErrorCode.PARAMS_ERROR);
          }
-         long id = deleteRequest.getId();
-         // 判断是否存在
-         App oldApp = appService.getById(id);
-         ThrowUtils.throwIf(oldApp == null,ErrorCode.NOT_FOUND_ERROR);
-         boolean result = appService.removeById(id);
-         return ResultUtils.success(result);
+         User user = userService.getLoginUser(request);
+         ThrowUtils.throwIf(user == null,ErrorCode.NOT_FOUND_ERROR,"当前管理员用户不存在");
+         return ResultUtils.success(appService.deleteAppByAdmin(appDeleteRequest,user));
      }
 
     /**

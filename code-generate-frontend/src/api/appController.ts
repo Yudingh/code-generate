@@ -15,7 +15,7 @@ export async function addApp(body: API.AppAddRequest, options?: { [key: string]:
 }
 
 /** 此处后端没有提供注释 POST /app/admin/delete */
-export async function deleteAppByAdmin(body: API.DeleteRequest, options?: { [key: string]: any }) {
+export async function deleteByAdmin(body: API.DeleteRequest, options?: { [key: string]: any }) {
   return request<API.BaseResponseBoolean>('/app/admin/delete', {
     method: 'POST',
     headers: {
@@ -29,7 +29,7 @@ export async function deleteAppByAdmin(body: API.DeleteRequest, options?: { [key
 /** 此处后端没有提供注释 GET /app/admin/get/vo */
 export async function getAppVoByIdByAdmin(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getAppVOByIdByAdminParams,
+  params: API.getAppVoByIdByAdminParams,
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponseAppVO>('/app/admin/get/vo', {
@@ -42,7 +42,7 @@ export async function getAppVoByIdByAdmin(
 }
 
 /** 此处后端没有提供注释 POST /app/admin/list/page/vo */
-export async function listAppVoByPageByAdmin(
+export async function listAdminAppVoByPage(
   body: API.AppQueryRequest,
   options?: { [key: string]: any }
 ) {
@@ -57,7 +57,7 @@ export async function listAppVoByPageByAdmin(
 }
 
 /** 此处后端没有提供注释 POST /app/admin/update */
-export async function updateAppByAdmin(
+export async function updateByAdmin(
   body: API.AppAdminUpdateRequest,
   options?: { [key: string]: any }
 ) {
@@ -77,7 +77,7 @@ export async function chatToGenCode(
   params: API.chatToGenCodeParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.ServerSentEventString[]>('/app/chat/gen/code', {
+  return request<API.ServerSentEventMapStringString[]>('/app/chat/gen/code', {
     method: 'GET',
     params: {
       ...params,
@@ -87,7 +87,7 @@ export async function chatToGenCode(
 }
 
 /** 此处后端没有提供注释 POST /app/delete */
-export async function deleteApp(body: API.DeleteRequest, options?: { [key: string]: any }) {
+export async function deleteApp(body: API.AppDeleteRequest, options?: { [key: string]: any }) {
   return request<API.BaseResponseBoolean>('/app/delete', {
     method: 'POST',
     headers: {
@@ -99,7 +99,7 @@ export async function deleteApp(body: API.DeleteRequest, options?: { [key: strin
 }
 
 /** 此处后端没有提供注释 POST /app/deploy */
-export async function deployApp(body: API.AppDeployRequest, options?: { [key: string]: any }) {
+export async function deploy(body: API.AppDeployRequest, options?: { [key: string]: any }) {
   return request<API.BaseResponseString>('/app/deploy', {
     method: 'POST',
     headers: {
@@ -113,7 +113,7 @@ export async function deployApp(body: API.AppDeployRequest, options?: { [key: st
 /** 此处后端没有提供注释 GET /app/get/vo */
 export async function getAppVoById(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getAppVOByIdParams,
+  params: API.getAppVoByIdParams,
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponseAppVO>('/app/get/vo', {

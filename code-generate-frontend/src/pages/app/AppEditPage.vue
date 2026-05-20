@@ -121,7 +121,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser'
-import { getAppVoById, updateApp, updateAppByAdmin } from '@/api/appController'
+import { getAppVoById, updateApp, updateByAdmin } from '@/api/appController'
 import { formatCodeGenType } from '@/utils/codeGenTypes'
 import { formatTime } from '@/utils/time'
 import UserInfo from '@/components/UserInfo.vue'
@@ -174,7 +174,7 @@ const fetchAppInfo = async () => {
 
   loading.value = true
   try {
-    const res = await getAppVoById({ id: id as unknown as number })
+    const res = await getAppVoById({ id: id as any })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
 
@@ -214,7 +214,7 @@ const handleSubmit = async () => {
     let res
     if (isAdmin.value) {
       // 管理员可以修改更多字段
-      res = await updateAppByAdmin({
+      res = await updateByAdmin({
         id: appInfo.value.id,
         appName: formData.appName,
         cover: formData.cover,

@@ -73,7 +73,7 @@
 </template>
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { deleteUser, listUserVoByPage, updateUser } from '@/api/userController.ts'
+import { deleteUsingPost, listUserVoByPage, update } from '@/api/userController.ts'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 
@@ -175,7 +175,7 @@ const doDelete = async (id?: number) => {
   if (!id) {
     return
   }
-  const res = await deleteUser({ id })
+  const res = await deleteUsingPost({ userId: id })
   if (res.data.code === 0) {
     message.success('删除成功')
     // 刷新数据
@@ -201,7 +201,7 @@ const doUpdateUser = async () => {
     message.error('用户 id 不存在')
     return
   }
-  const res = await updateUser({
+  const res = await update({
     id: editForm.id,
     userName: editForm.userName,
     userAvatar: editForm.userAvatar,
