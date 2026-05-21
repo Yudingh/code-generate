@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.ydh</groupId>
-    <artifactId>ai-code-genrate</artifactId>
+    <artifactId>ai-code-generate</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ai-code-genrate</name>
-    <description>ai-code-genrate</description>
+    <name>ai-code-generate</name>
+    <description>ai-code-generate</description>
     <url/>
     <licenses>
         <license/>
@@ -111,7 +111,12 @@
             <artifactId>langchain4j-reactor</artifactId>
             <version>1.1.0-beta7</version>
         </dependency>
-
+        <!--  Redis依赖  -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-community-redis-spring-boot-starter</artifactId>
+            <version>1.1.0-beta7</version>
+        </dependency>
 
     </dependencies>
 

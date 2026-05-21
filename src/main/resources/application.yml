@@ -1,11 +1,19 @@
 spring:
   application:
-    name: ai-code-genrate
+    name: ai-code-generate
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/ai_code_generate
     username: root
     password: Qwer15896353225
+  data:
+    redis:
+      host: 192.168.182.128
+      port: 6379
+      password: 123321
+      ttl: 3600
+      username: default
+      database: 1
   profiles:
     active: local
 server:
@@ -16,7 +24,7 @@ server:
 springdoc:
   group-configs:
     - group: 'default'
-      packages-to-scan: com.ydh.aicodegenrate.controller
+      packages-to-scan: com.ydh.aicodegenerate.controller
 # knife4j
 knife4j:
   enable: true
@@ -25,4 +33,4 @@ knife4j:
 # 替换成你自己的 mapper 包路径
 logging:
   level:
-    com.ydh.aicodegenrate.mapper: debug
+    com.ydh.aicodegenerate.mapper: debug
