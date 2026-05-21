@@ -6,6 +6,7 @@ import com.mybatisflex.core.service.IService;
 import com.ydh.aicodegenerate.model.dto.chatHistory.ChatHistoryQueryRequest;
 import com.ydh.aicodegenerate.model.entity.ChatHistory;
 import com.ydh.aicodegenerate.model.entity.User;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 
 import java.time.LocalDateTime;
 
@@ -49,4 +50,13 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @return 分页对话
      */
     Page<ChatHistory> listAppChatHistoryByPage(Long appId, int pageSize, LocalDateTime lastCreateTime, Long lastId, User user);
+
+    /**
+     * 将对话历史从数据库中加载到记忆中
+     * @param appId appId
+     * @param chatMemory AI服务的记忆
+     * @param maxCount 最大条数
+     * @return 成功加载的条数
+     */
+    int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount);
 }

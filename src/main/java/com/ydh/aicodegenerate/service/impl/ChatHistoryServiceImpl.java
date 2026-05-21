@@ -1,5 +1,6 @@
 package com.ydh.aicodegenerate.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -16,17 +17,23 @@ import com.ydh.aicodegenerate.model.entity.User;
 import com.ydh.aicodegenerate.model.enums.ChatHistoryMessageTypeEnum;
 import com.ydh.aicodegenerate.service.AppService;
 import com.ydh.aicodegenerate.service.ChatHistoryService;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 对话历史 服务层实现。
  *
  * @author Nithti
  */
+@Slf4j
 @Service
 public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatHistory>  implements ChatHistoryService{
 
@@ -109,5 +116,41 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         QueryWrapper queryWrapper = this.getQueryWrapper(queryRequest);
         // 查询条件
         return this.page(Page.of(1,pageSize), queryWrapper);
+    }
+
+    @Override
+    public int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount) {
+        try {
+            // 1. 从数据库中查询历史对话
+            // 从 1 开始查询历史消息，是因为在对话流程中用户消息首先被加入到数据库，AI服务也会自动将用户消息添加到记忆中，如果不排除会导致重复加载
+            QueryWrapper wrapper = QueryWrapper.create().eq(ChatHistory::getAppId, appId)
+                    .orderBy(ChatHistory::getCreateTime, false)
+                    .limit(1, maxCount);
+            List<ChatHistory> historyList = this.list(wrapper);
+            // 2. 判断是否为空
+            if (CollUtil.isEmpty(historyList)) {
+                return 0;
+            }
+            // 3. 反转列表，确保先创建的对话在前
+            historyList = historyList.reversed();
+            // 4. 将对话加入记忆
+            int count = 0;
+            // 防止重复加载
+            chatMemory.clear();
+            for (ChatHistory history : historyList) {
+                if (ChatHistoryMessageTypeEnum.USER.getValue().equals(history.getMessageType())) {
+                    chatMemory.add(UserMessage.from(history.getMessage()));
+                    count++;
+                }else if (ChatHistoryMessageTypeEnum.AI.getValue().equals(history.getMessageType())) {
+                    chatMemory.add(AiMessage.from(history.getMessage()));
+                    count++;
+                }
+            }
+            log.info("成功为应用：{}，加载{}条消息：",appId,count);
+            return count;
+        }catch (Exception e) {
+            log.info("应用：{}，加载历史消息失败:{}：",appId,e.getMessage());
+            return 0;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.ydh.aicodegenerate.core;
 
 import com.ydh.aicodegenerate.ai.AiCodeGeneratorService;
+import com.ydh.aicodegenerate.ai.AiCodeGeneratorServiceFactory;
 import com.ydh.aicodegenerate.ai.model.HtmlCodeResult;
 import com.ydh.aicodegenerate.ai.model.MultiFileCodeResult;
 import com.ydh.aicodegenerate.core.parser.CodeParserExecutor;
@@ -23,7 +24,7 @@ import java.io.File;
 @Slf4j
 public class AiCodeGeneratorFacade {
     @Resource
-    private AiCodeGeneratorService aiCodeGeneratorService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
 
     /**
@@ -39,6 +40,8 @@ public class AiCodeGeneratorFacade {
         if (userMessage == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户输入不能为空");
         }
+        // 根据Id获取应用服务实例
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         switch (codeGenType) {
             case HTML -> {
                 HtmlCodeResult htmlCodeResult = aiCodeGeneratorService.generateHTMLCode(userMessage);
@@ -65,6 +68,7 @@ public class AiCodeGeneratorFacade {
         if (userMessage == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户输入不能为空");
         }
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         switch (codeGenType) {
             case HTML -> {
                 Flux<String> htmlCodeStream = aiCodeGeneratorService.generateHTMLCodeStream(userMessage);
